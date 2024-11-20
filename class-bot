@@ -1,0 +1,62 @@
+const { Client, GatewayIntentBits } = require('discord.js');
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers
+    ],
+});
+
+const TOKEN = 'IL_TUO_TOKEN'; // Sostituisci con il token del tuo bot
+const CHANNEL_ID = '123456789012345678'; // Sostituisci con l'ID del canale
+
+// Lista di emoji random
+const emojiList = ['🔥', '⚔️', '🛡️', '🎯', '🔮', '🧙‍♂️', '🏹', '💀', '🐉', '✨'];
+
+client.once('ready', async () => {
+    console.log(`Bot online come ${client.user.tag}`);
+
+    // Recupera il canale
+    const channel = client.channels.cache.get(CHANNEL_ID);
+
+    if (!channel) {
+        console.error('Canale non trovato. Controlla l\'ID del canale.');
+        return;
+    }
+
+    // Invia il messaggio
+    const message = await channel.send('Seleziona la tua tipologia di classe:');
+
+    // Aggiungi 6 reazioni random
+    const selectedEmojis = emojiList.sort(() => 0.5 - Math.random()).slice(0, 6); // Seleziona 6 emoji casuali
+    for (const emoji of selectedEmojis) {
+        await message.react(emoji);
+    }
+
+    console.log('Reazioni aggiunte con successo!');
+});
+
+// Gestisce quando un utente clicca su una reazione
+client.on('messageReactionAdd', async (reaction, user) => {
+    if (user.bot) return; // Ignora le reazioni dei bot
+
+    const guild = reaction.message.guild;
+    const member = guild.members.cache.get(user.id);
+
+    if (!member) return;
+
+    // Modifica il nome dell'utente
+    const originalName = member.displayName.replace(/^[^\s]+ /, ''); // Rimuove eventuali emoji precedenti
+    const newName = `${reaction.emoji.name} ${originalName}`;
+
+    try {
+        await member.setNickname(newName);
+        console.log(`Nickname aggiornato per ${user.username}: ${newName}`);
+    } catch (error) {
+        console.error(`Impossibile cambiare il nickname di ${user.username}:`, error);
+    }
+});
+
+client.login(TOKEN);
